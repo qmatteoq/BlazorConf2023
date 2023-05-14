@@ -1,4 +1,5 @@
 ﻿@using Microsoft.Graph;
+@using Microsoft.Graph.Models;
 @inject TeamsFx teamsfx
 @inject TeamsUserCredential teamsUserCredential
 @inject MicrosoftTeams MicrosoftTeams
@@ -21,7 +22,7 @@ else
 
 @code {
     string name;
-    ITodoTaskListTasksCollectionPage tasks;
+    List<TodoTask> tasks;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -35,10 +36,10 @@ else
                 try
                 {                                                                  
                     var graphClient = teamsfx.CreateMicrosoftGraphClient(teamsUserCredential, scopes);
-                    var lists = await graphClient.Me.Todo.Lists.Request().GetAsync();
-                    var mainList = lists.Where(x => x.DisplayName == "Tasks").FirstOrDefault();
-                    tasks = await graphClient.Me.Todo.Lists[mainList.Id].Tasks.Request().GetAsync();
-
+                    var lists = await graphClient.Me.Todo.Lists.GetAsync();
+                    var mainList = lists.Value.Where(x => x.DisplayName == "Tasks").FirstOrDefault();
+                    var response = await graphClient.Me.Todo.Lists[mainList.Id].Tasks.GetAsync();
+                    tasks = response.Value;
                 }
                 catch
                 {

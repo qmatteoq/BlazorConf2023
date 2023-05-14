@@ -53,7 +53,8 @@
     private async Task SummarizeDocument(DriveFile document)
     {
         IsLoading = true;
-        var content = await graphClient.Me.Drive.Items[document.Id].Content.Request().GetAsync();
+        var drive = await graphClient.Me.Drive.GetAsync();
+        var content = await graphClient.Drives[drive.Id].Items[document.Id].Content.GetAsync();
         MemoryStream stream = new MemoryStream();
         await content.CopyToAsync(stream);
 
@@ -85,9 +86,10 @@
         if (await HasPermission(_scope))
         {
             graphClient = teamsfx.CreateMicrosoftGraphClient(teamsUserCredential, _scope);
-            var result = await graphClient.Me.Drive.Root.Children.Request().GetAsync();
+            var result = await graphClient.Me.Drive.GetAsync();
+            var filesResult = await graphClient.Drives[result.Id].Items["root"].Children.GetAsync();
 
-            foreach (var item in result.CurrentPage)
+            foreach (var item in filesResult.Value)
             {
                 files.Add(new DriveFile
                     {
