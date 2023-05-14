@@ -3,11 +3,13 @@
 @using DocumentFormat.OpenXml.Packaging;
 @using Microsoft.Graph;
 @using Microsoft.Fast.Components.FluentUI
+@using Microsoft.SemanticKernel;
 @inject TeamsFx teamsfx
 @inject TeamsUserCredential teamsUserCredential
 @inject MicrosoftTeams MicrosoftTeams
+@inject IConfiguration configuration;
 
-<h3>Document Summary</h3>
+<h2>Document Summarize</h2>
 
 @if (files != null)
 {
@@ -24,12 +26,12 @@
             <tr>
                 <td>@file.Name</td>
                 <td><FluentButton Appearance="Appearance.Accent" @onclick="() => SummarizeDocument(file)">Summarize</FluentButton></td>
-             </tr>
+            </tr>
         }
 
     </table>
 
-    <p>Document content:</p>
+    <p><h3>Document summary:</h3></p>
     <p>@documentContent</p>
 }
 
@@ -59,7 +61,20 @@
         await content.CopyToAsync(stream);
 
         WordprocessingDocument wordprocessingDocument = WordprocessingDocument.Open(stream, true);
-        documentContent = wordprocessingDocument.MainDocumentPart.Document.Body.InnerText;
+        var documentBody = wordprocessingDocument.MainDocumentPart.Document.Body.InnerText;
+
+        string openAIKey = configuration["OpenAI:ApiKey"];
+        string model = configuration["OpenAI:Model"];
+
+        var kernel = Kernel.Builder.Build();
+        kernel.Config.AddOpenAIChatCompletionService(model, openAIKey);
+
+        var skill = kernel.ImportSemanticSkillFromDirectory("Skills", "SummarizeSkill");
+
+        var response = await kernel.RunAsync(documentBody, skill["Summarize"]);
+
+        documentContent = response.Result;
+
         IsLoading = false;
     }
 
@@ -89,7 +104,7 @@
             var result = await graphClient.Me.Drive.GetAsync();
             var filesResult = await graphClient.Drives[result.Id].Items["root"].Children.GetAsync();
 
-            foreach (var item in filesResult.Value)
+            foreach (var item in filesResult.Value.Where(x => x.Name.EndsWith("docx")))
             {
                 files.Add(new DriveFile
                     {
