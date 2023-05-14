@@ -1,0 +1,55 @@
+﻿@using Microsoft.Graph;
+@inject TeamsFx teamsfx
+@inject TeamsUserCredential teamsUserCredential
+@inject MicrosoftTeams MicrosoftTeams
+
+<h3>Tasks</h3>
+
+@if (tasks == null)
+{
+    <p><em>Loading...</em></p>
+}
+else 
+{
+    <ul>
+        @foreach (var task in tasks)
+        {
+            <li>@task.Title</li>
+        }
+    </ul>
+}
+
+@code {
+    string name;
+    ITodoTaskListTasksCollectionPage tasks;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        string scopes = "Tasks.Read";
+        if (firstRender)
+        {
+            bool isInTeams = await MicrosoftTeams.IsInTeams();
+
+            if (isInTeams)
+            {
+                try
+                {                                                                  
+                    var graphClient = teamsfx.CreateMicrosoftGraphClient(teamsUserCredential, scopes);
+                    var lists = await graphClient.Me.Todo.Lists.Request().GetAsync();
+                    var mainList = lists.Where(x => x.DisplayName == "Tasks").FirstOrDefault();
+                    tasks = await graphClient.Me.Todo.Lists[mainList.Id].Tasks.Request().GetAsync();
+
+                }
+                catch
+                {
+                    await teamsUserCredential.LoginAsync(scopes);
+                }
+            }
+
+            StateHasChanged();
+
+        }
+    }
+
+
+}

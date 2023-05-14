@@ -1,0 +1,101 @@
+﻿@using Azure.Core;
+@using BlazorConf2023.Models;
+@using DocumentFormat.OpenXml.Packaging;
+@using Microsoft.Graph;
+@using Microsoft.Fast.Components.FluentUI
+@inject TeamsFx teamsfx
+@inject TeamsUserCredential teamsUserCredential
+@inject MicrosoftTeams MicrosoftTeams
+
+<h3>Document Summary</h3>
+
+@if (files != null)
+{
+    <table>
+        <thead>
+            <tr>
+                <th>File name</th>
+                <th>Summarize</th>
+            </tr>
+        </thead>
+
+        @foreach (var file in files)
+        {
+            <tr>
+                <td>@file.Name</td>
+                <td><FluentButton Appearance="Appearance.Accent" @onclick="() => SummarizeDocument(file)">Summarize</FluentButton></td>
+             </tr>
+        }
+
+    </table>
+
+    <p>Document content:</p>
+    <p>@documentContent</p>
+}
+
+@if (IsLoading)
+{
+    <FluentProgressRing />
+}
+
+
+@code {
+
+    private readonly string _scope = "Files.Read.All";
+
+    public bool IsLoading { get; set; }
+    public bool NeedConsent { get; set; }
+    public List<DriveFile> files = new();
+    public string documentContent;
+    private GraphServiceClient graphClient;
+
+
+    private async Task SummarizeDocument(DriveFile document)
+    {
+        IsLoading = true;
+        var content = await graphClient.Me.Drive.Items[document.Id].Content.Request().GetAsync();
+        MemoryStream stream = new MemoryStream();
+        await content.CopyToAsync(stream);
+
+        WordprocessingDocument wordprocessingDocument = WordprocessingDocument.Open(stream, true);
+        documentContent = wordprocessingDocument.MainDocumentPart.Document.Body.InnerText;
+        IsLoading = false;
+    }
+
+    private async Task<bool> HasPermission(string scope)
+    {
+        try
+        {
+            await teamsUserCredential.GetTokenAsync(new TokenRequestContext(new string[] { _scope }), new System.Threading.CancellationToken());
+            return true;
+        }
+        catch (ExceptionWithCode e)
+        {
+            if (e.Code == ExceptionCode.UiRequiredError)
+            {
+                NeedConsent = true;
+            }
+        }
+        return false;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        IsLoading = true;
+        if (await HasPermission(_scope))
+        {
+            graphClient = teamsfx.CreateMicrosoftGraphClient(teamsUserCredential, _scope);
+            var result = await graphClient.Me.Drive.Root.Children.Request().GetAsync();
+
+            foreach (var item in result.CurrentPage)
+            {
+                files.Add(new DriveFile
+                    {
+                        Id = item.Id,
+                        Name = item.Name
+                    });
+            }
+        }
+        IsLoading = false;
+    }
+}
