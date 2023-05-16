@@ -8,6 +8,7 @@
 @inject TeamsUserCredential teamsUserCredential
 @inject MicrosoftTeams MicrosoftTeams
 @inject IConfiguration configuration;
+@inject NavigationManager MyNavigationManager
 
 <h2>Document Summarize</h2>
 
@@ -17,6 +18,7 @@
         <thead>
             <tr>
                 <th>File name</th>
+                <th>Open</th>
                 <th>Summarize</th>
             </tr>
         </thead>
@@ -25,6 +27,7 @@
         {
             <tr>
                 <td>@file.Name</td>
+                <td><FluentButton Appearance="Appearance.Accent" @onclick="() => MyNavigationManager.NavigateTo(file.WebUrl)">Open</FluentButton></td>
                 <td><FluentButton Appearance="Appearance.Accent" @onclick="() => SummarizeDocument(file)">Summarize</FluentButton></td>
             </tr>
         }
@@ -118,7 +121,8 @@
                 files.Add(new DriveFile
                     {
                         Id = item.Id,
-                        Name = item.Name
+                        Name = item.Name,
+                        WebUrl = item.WebUrl
                     });
             }
         }
