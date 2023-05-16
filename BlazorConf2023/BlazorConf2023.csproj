@@ -17,6 +17,21 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Skills\SummarizeSkill\MakeAbstractReadable\skprompt.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Skills\SummarizeSkill\Notegen\skprompt.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Skills\SummarizeSkill\Summarize\skprompt.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Skills\SummarizeSkill\Topics\skprompt.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="DocumentFormat.OpenXml" Version="2.20.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.0" />
     <PackageReference Include="Microsoft.Graph" Version="5.10.0" />
@@ -27,7 +42,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Skills\" />
+    <Content Update="Skills\SummarizeSkill\MakeAbstractReadable\config.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Skills\SummarizeSkill\Summarize\config.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

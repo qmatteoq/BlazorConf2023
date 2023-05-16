@@ -10,7 +10,7 @@
 {
     <p><em>Loading...</em></p>
 }
-else 
+else
 {
     <ul>
         @foreach (var task in tasks)
@@ -24,33 +24,21 @@ else
     string name;
     List<TodoTask> tasks;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected async override Task OnInitializedAsync()
     {
         string scopes = "Tasks.Read";
-        if (firstRender)
+        try
         {
-            bool isInTeams = await MicrosoftTeams.IsInTeams();
-
-            if (isInTeams)
-            {
-                try
-                {                                                                  
-                    var graphClient = teamsfx.CreateMicrosoftGraphClient(teamsUserCredential, scopes);
-                    var lists = await graphClient.Me.Todo.Lists.GetAsync();
-                    var mainList = lists.Value.Where(x => x.DisplayName == "Tasks").FirstOrDefault();
-                    var response = await graphClient.Me.Todo.Lists[mainList.Id].Tasks.GetAsync();
-                    tasks = response.Value;
-                }
-                catch
-                {
-                    await teamsUserCredential.LoginAsync(scopes);
-                }
-            }
-
-            StateHasChanged();
-
+            var graphClient = teamsfx.CreateMicrosoftGraphClient(teamsUserCredential, scopes);
+            var lists = await graphClient.Me.Todo.Lists.GetAsync();
+            var mainList = lists.Value.Where(x => x.DisplayName == "Tasks").FirstOrDefault();
+            var response = await graphClient.Me.Todo.Lists[mainList.Id].Tasks.GetAsync();
+            tasks = response.Value;
         }
+        catch
+        {
+            await teamsUserCredential.LoginAsync(scopes);
+        }
+
     }
-
-
 }
