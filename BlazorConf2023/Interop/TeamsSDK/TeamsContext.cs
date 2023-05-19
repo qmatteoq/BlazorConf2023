@@ -271,7 +271,7 @@ public enum FrameContext
     [Description("remove")] Remove,
     [Description("settings")] Settings,
     [Description("sidePanel")] SidePanel,
-    [Description("stage")] Stage,
+    [Description("meetingStage")] MeetingStage,
     [Description("task")] Task
 }
 

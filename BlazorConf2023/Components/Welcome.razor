@@ -24,14 +24,7 @@ else
                 @if (isInTeams)
                 {
                     <strong>The application is running in Microsoft Teams</strong>
-                    @if (!string.IsNullOrEmpty(teamName))
-                    {
-                        <div>It's hosted in the @channelName channel of the @teamName team</div>
-                    }
-                    else
-                    {
-                        <div>It's running as a personal app</div>
-                    }
+                    <div>@statusMessage</div>
                 }
                 else
                 {
@@ -59,6 +52,7 @@ else
     bool isLoading = true;
     string teamName;
     string channelName;
+    string statusMessage;
 
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -76,8 +70,15 @@ else
                 var teamsContext = await MicrosoftTeams.GetTeamsContextAsync();
                 if (teamsContext != null && teamsContext.Team != null)
                 {
-                    teamName = teamsContext.Team.DisplayName;
-                    channelName = teamsContext.Channel.DisplayName;
+                    statusMessage = $"The app is running in the context of the {teamsContext.Channel.DisplayName} channel of the {teamsContext.Team.DisplayName} team";
+                }
+                else if (teamsContext != null && teamsContext.Meeting != null)
+                {
+                    statusMessage = $"The app is running in the context of the meeting with id {teamsContext.Meeting.Id}";
+                }
+                else
+                {
+                    statusMessage = $"The app is running in the context of the personal scope";
                 }
             }
             else
