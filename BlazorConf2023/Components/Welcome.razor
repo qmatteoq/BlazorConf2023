@@ -34,12 +34,22 @@ else
             <FluentTabs style="width: 80%; justify-content: space-between; margin: 4rem auto;">
                 <FluentTab><strong>Files</strong></FluentTab>
                 <FluentTab><strong>Tasks</strong></FluentTab>
+                @if (isMeeting)
+                {
+                    <FluentTab><strong>Meeting info</strong></FluentTab>
+                }
                 <FluentTabPanel>
                     <DocumentSummary />
                 </FluentTabPanel>
                 <FluentTabPanel>
                     <Tasks />
                 </FluentTabPanel>
+                @if (isMeeting)
+                {
+                    <FluentTabPanel>
+                        <MeetingDetails />
+                    </FluentTabPanel>
+                }
             </FluentTabs>
         </div>
     </div>
@@ -53,6 +63,7 @@ else
     string teamName;
     string channelName;
     string statusMessage;
+    bool isMeeting;
 
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -68,13 +79,14 @@ else
                 var user = await teamsUserCredential.GetUserInfoAsync();
                 userName = user.DisplayName;
                 var teamsContext = await MicrosoftTeams.GetTeamsContextAsync();
-                if (teamsContext != null && teamsContext.Team != null)
+                if (teamsContext != null && teamsContext.Meeting != null)
+                {
+                    isMeeting = true;
+                    statusMessage = $"The app is running in the context of the meeting with id {teamsContext.Meeting.Id}";
+                }
+                else if (teamsContext != null && teamsContext.Team != null)
                 {
                     statusMessage = $"The app is running in the context of the {teamsContext.Channel.DisplayName} channel of the {teamsContext.Team.DisplayName} team";
-                }
-                else if (teamsContext != null && teamsContext.Meeting != null)
-                {
-                    statusMessage = $"The app is running in the context of the meeting with id {teamsContext.Meeting.Id}";
                 }
                 else
                 {

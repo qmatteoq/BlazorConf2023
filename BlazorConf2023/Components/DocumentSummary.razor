@@ -103,15 +103,7 @@
         IsLoading = true;
         if (await HasPermission(_scope))
         {
-            if (await MicrosoftTeams.IsInTeams())
-            {
-                graphClient = teamsfx.CreateMicrosoftGraphClient(teamsUserCredential, _scope);
-            }
-            else
-            {
-                var msGraphAuthProvider = new MsGraphAuthProvider(teamsUserCredential, _scope);
-                graphClient = new GraphServiceClient(msGraphAuthProvider);
-            }
+            graphClient = teamsfx.CreateMicrosoftGraphClient(teamsUserCredential, _scope);
 
             var result = await graphClient.Me.Drive.GetAsync();
             var filesResult = await graphClient.Drives[result.Id].Items["root"].Children.GetAsync();

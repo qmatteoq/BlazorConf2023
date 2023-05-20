@@ -64,5 +64,19 @@
   "webApplicationInfo": {
     "id": "${{AAD_APP_CLIENT_ID}}",
     "resource": "api://${{PROVISIONOUTPUT__AZUREWEBAPPTABOUTPUT__DOMAIN}}/${{AAD_APP_CLIENT_ID}}"
+  },
+  "authorization": {
+    "permissions": {
+      "resourceSpecific": [
+        {
+          "name": "OnlineMeeting.ReadBasic.Chat",
+          "type": "Application"
+        },
+        {
+          "name": "ChannelMeeting.ReadBasic.Group",
+          "type": "Application"
+        }
+      ]
+    }
   }
 }

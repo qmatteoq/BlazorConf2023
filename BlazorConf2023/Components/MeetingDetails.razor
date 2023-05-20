@@ -1,0 +1,116 @@
+﻿@using Azure.Core;
+@using System.Text.Encodings.Web;
+@using System.Web;
+@inject TeamsFx teamsfx
+@inject TeamsUserCredential teamsUserCredential
+@inject MicrosoftTeams MicrosoftTeams
+
+<h3>Meeting Details</h3>
+
+<p>Join meeting at <a href="@joinWebUrl">@joinWebUrl</a></p>
+
+<p>The meeting subject is <strong>@meetingSubject</strong></p>
+
+<p>The meeting organizer is <strong>@MeetingOrganizer</strong></p>
+
+<p>@ErrorMessage</p>
+
+@code {
+    private readonly string[] _scopes = new string[]
+                            { "OnlineMeetingArtifact.Read.All", "OnlineMeetings.Read", "Chat.Read" };
+    public bool NeedConsent { get; set; }
+    public string meetingSubject;
+    public string finalMeetingId;
+    public string joinWebUrl;
+    public string ErrorMessage;
+    public string MeetingOrganizer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (await MicrosoftTeams.IsInTeams())
+        {
+            if (await HasPermission(_scopes))
+            {
+                await LoadMeetingInfo();
+            }
+            else
+            {
+                await ConsentAndShow();
+            }
+        }
+    }
+
+    public async Task LoadMeetingInfo()
+    {
+        var context = await MicrosoftTeams.GetTeamsContextAsync();
+        if (context.Meeting != null)
+        {
+            string meetingId = context.Meeting.Id;
+            string decodedMeetingId = Base64Decode(meetingId);
+            string finalMeeting = RemoveFirstAndLastChar(decodedMeetingId);
+            finalMeetingId = finalMeeting;
+
+            var graphClient = teamsfx.CreateMicrosoftGraphClient(teamsUserCredential, _scopes);
+
+            var meetingChat = await graphClient.Chats[finalMeetingId].GetAsync();
+            joinWebUrl = meetingChat.OnlineMeetingInfo.JoinWebUrl;
+
+            var meeting = await graphClient.Me.OnlineMeetings.GetAsync(
+                requestConfig => requestConfig.QueryParameters.Filter = $"joinWebUrl eq '{meetingChat.OnlineMeetingInfo.JoinWebUrl}'");
+
+
+            meetingSubject = meeting.Value.FirstOrDefault().Subject;
+            MeetingOrganizer = meeting.Value.FirstOrDefault().Participants.Organizer.Upn;
+        }
+    }
+
+    private async Task ConsentAndShow()
+    {
+        try
+        {
+            await teamsUserCredential.LoginAsync(_scopes);
+            NeedConsent = false;
+            await ConsentAndShow();
+        }
+        catch (ExceptionWithCode e)
+        {
+            ErrorMessage = e.Message;
+        }
+    }
+
+    public string RemoveFirstAndLastChar(string str)
+    {
+        if (str.Length < 2)
+        {
+            return "";
+        }
+        else
+        {
+            return str.Substring(2, str.Length - 4);
+        }
+    }
+
+
+    public string Base64Decode(string base64EncodedData)
+    {
+        var base64EncodedBytes = System.Convert.FromBase64String(base64EncodedData);
+        return System.Text.Encoding.UTF8.GetString(base64EncodedBytes);
+    }
+
+    private async Task<bool> HasPermission(string[] scopes)
+    {
+        try
+        {
+            await teamsUserCredential.GetTokenAsync(new TokenRequestContext(scopes), new System.Threading.CancellationToken());
+            return true;
+        }
+        catch (ExceptionWithCode e)
+        {
+            if (e.Code == ExceptionCode.UiRequiredError)
+            {
+                NeedConsent = true;
+            }
+        }
+        return false;
+    }
+}
