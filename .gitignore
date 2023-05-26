@@ -377,3 +377,4 @@ env\.env.*
 .backup/*
 /BlazorConf2023/env/.env.dev
 /BlazorConf2023/env/.env.local
+/BlazorConf2023/.env.teamsfx.dev
