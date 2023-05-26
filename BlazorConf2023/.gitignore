@@ -11,3 +11,4 @@ build
 appsettings.Development.json
 env\.env.*
 .backup/*
+env
