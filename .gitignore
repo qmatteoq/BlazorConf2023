@@ -375,3 +375,5 @@ build
 appsettings.Development.json
 env\.env.*
 .backup/*
+/BlazorConf2023/env/.env.dev
+/BlazorConf2023/env/.env.local
